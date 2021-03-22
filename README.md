@@ -1,8 +1,8 @@
 # 소프트웨어종합설계팀 안내사항
 
 - [pretrain된 PG모델](https://drive.google.com/file/d/1dQNxyiP4g4pdFQD6EPMQdzNow9sQevqD/view?usp=sharing)을 다운받아 '../commonsense-qa/saved_models/pretrain_generator'로 옮겨주세요.
-- path들을 확인하기 편하게 하기 위하여 small_csqa라는 데이터셋을 만들어두었습니다.
-- 해당 데이터는 google drive에 추가하도록 하겠습니다. (오늘내로)
+- path들을 확인하기 편하게 하기 위하여 [small_csqa](https://drive.google.com/file/d/1kCw5yKTPC3hsc2K_lMjLGMeOlrpABKij/view?usp=sharing)라는 데이터셋을 만들어두었습니다.
+- 해당 데이터는 다운받아서 '../commonsense-qa/data'에 추가해주세요
 - 아래의 코드를 그대로 실행해주세요 (small_csqa.config에 ablation으로 PG를 생성안하도록 바꾸어놓음)
 - 제 [노션](https://www.notion.so/Path-Generator-90508348ed7a4123874ad41925c3206b)에 오류났던 부분 올려놓았는데 혹시 오류나면 참고해주세요.
 - 그 외 궁금한 부분은 이슈로 질문주세요!
