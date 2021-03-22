@@ -20,4 +20,4 @@ nohup python -u main.py \
 	--save_model $save_model \
 	--seed $seed \
 	--mode $mode \
-	> ${save_dir}/pred_minju_deleted_all.log 2>&1 &
+	> ${save_dir}/train.log 2>&1 &

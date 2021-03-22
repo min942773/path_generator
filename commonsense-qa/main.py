@@ -169,7 +169,7 @@ def train(args):
     device = torch.device('cuda:{}'.format(args.gpu_device) if torch.cuda.is_available() else 'cpu')
 
 # EDITED
-    path_embedding_path = os.path.join('./path_embeddings/', args.dataset, 'path_embedding_minju.pickle')
+    path_embedding_path = os.path.join('./path_embeddings/', args.dataset, 'path_embedding.pickle')
     dataset = LMRelationNetDataLoader(path_embedding_path, args.train_statements, args.train_rel_paths,
                                       args.dev_statements, args.dev_rel_paths,
                                       args.test_statements, args.test_rel_paths,
