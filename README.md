@@ -103,3 +103,4 @@ python preprocess.py
 bash scripts/run_main.sh ./config/csqa.config
 ```
 Training process and final evaluation results would be stored in './saved_models/'
+# path_generator
