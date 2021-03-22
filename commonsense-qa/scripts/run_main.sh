@@ -19,4 +19,5 @@ nohup python -u main.py \
 	--nprocs 20 \
 	--save_model $save_model \
 	--seed $seed \
-	> ${save_dir}/train.log 2>&1 &
+	--mode $mode \
+	> ${save_dir}/pred_minju_deleted_all.log 2>&1 &

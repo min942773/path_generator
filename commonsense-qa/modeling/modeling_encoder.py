@@ -114,7 +114,6 @@ class TextEncoder(nn.Module):
         layer_id: only works for non-LSTM encoders
         output_token_states: if True, return hidden states of specific layer and attention masks
         '''
-
         if self.model_type in ('lstm',):  # lstm
             input_ids, lengths = inputs
             outputs = self.module(input_ids, lengths)

@@ -8,6 +8,8 @@ from utils.optimization_utils import OPTIMIZER_CLASSES
 from utils.parser_utils import *
 from utils.relpath_utils import *
 
+import wandb # EDITED
+
 def get_node_feature_encoder(encoder_name):
     return encoder_name.replace('-cased', '-uncased')
 
@@ -40,6 +42,8 @@ def pred_to_file(eval_set, model, output_path):
     fw.close()
 
 def main():
+    wandb.init(project='path_generator') # EDITED
+
     parser = get_parser()
     args, _ = parser.parse_known_args()
     parser.add_argument('--mode', default='train', choices=['train', 'eval', 'pred'], help='run training or evaluation')
@@ -96,6 +100,9 @@ def main():
     parser.add_argument('--grad_step', default=1, type=int)
 
     parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS, help='show this help message and exit')
+
+    parser.add_argument('--wandb', default=False, type=bool_flag, help='use wandb') # EDITED
+
     args = parser.parse_args()
     if args.debug:
         parser.set_defaults(batch_size=1, log_interval=1, eval_interval=5)
@@ -161,7 +168,8 @@ def train(args):
 
     device = torch.device('cuda:{}'.format(args.gpu_device) if torch.cuda.is_available() else 'cpu')
 
-    path_embedding_path = os.path.join('./path_embeddings/', args.dataset, 'path_embedding.pickle')
+# EDITED
+    path_embedding_path = os.path.join('./path_embeddings/', args.dataset, 'path_embedding_minju.pickle')
     dataset = LMRelationNetDataLoader(path_embedding_path, args.train_statements, args.train_rel_paths,
                                       args.dev_statements, args.dev_rel_paths,
                                       args.test_statements, args.test_rel_paths,
@@ -190,6 +198,7 @@ def train(args):
 
     try:
         model.to(device)
+        wandb.watch(model) # EDITED
     except RuntimeError as e:
         print(e)
         print('best dev acc: 0.0 (at epoch 0)')
@@ -287,6 +296,9 @@ def train(args):
                 rel_grad = []
                 linear_grad = []
                 start_time = time.time()
+
+            wandb.log({'train_loss':total_loss}) # EDITED
+            
             global_step += 1
 
         model.eval()
@@ -295,6 +307,11 @@ def train(args):
         print('-' * 71)
         print('| epoch {:5} | dev_acc {:7.4f} | test_acc {:7.4f} |'.format(epoch_id, dev_acc, test_acc))
         print('-' * 71)
+
+        wandb.log({'epoch':epoch_id,
+                   'dev_acc':dev_acc,
+                   'test_acc':test_acc}) # EDITED
+
         with open(log_path, 'a') as fout:
             fout.write('{},{},{}\n'.format(global_step, dev_acc, test_acc))
         if dev_acc >= best_dev_acc:
@@ -303,7 +320,7 @@ def train(args):
             best_dev_epoch = epoch_id
             if args.save_model == 1:
                 torch.save([model, args], model_path)
-            print(f'model saved to {model_path}')
+                print(f'model saved to {model_path}') # EDITED
         model.train()
         start_time = time.time()
         if epoch_id > args.unfreeze_epoch and epoch_id - best_dev_epoch >= args.max_epochs_before_stop:
@@ -340,19 +357,47 @@ def pred(args):
 
     path_embedding_path = os.path.join('./path_embeddings/', args.dataset, 'path_embedding.pickle')
 
-    dataset = LMRelationNetDataLoaderForPred(path_embedding_path, old_args.train_statements, old_args.train_rel_paths,
-                                      old_args.dev_statements, old_args.dev_rel_paths,
-                                      old_args.test_statements, old_args.test_rel_paths,
+    # dataset = LMRelationNetDataLoaderForPred(path_embedding_path, old_args.train_statements, old_args.train_rel_paths,
+    #                                   old_args.dev_statements, old_args.dev_rel_paths,
+    #                                   old_args.test_statements, old_args.test_rel_paths,
+    #                                   batch_size=args.batch_size, eval_batch_size=args.eval_batch_size, device=device,
+    #                                   model_name=old_args.encoder,
+    #                                   max_tuple_num=old_args.max_tuple_num, max_seq_length=old_args.max_seq_len,
+    #                                   is_inhouse=args.inhouse, inhouse_train_qids_path=args.inhouse_train_qids,
+    #                                   use_contextualized=use_contextualized,
+    #                                   train_adj_path=args.train_adj, dev_adj_path=args.dev_adj, test_adj_path=args.test_adj,
+    #                                   train_node_features_path=args.train_node_features, dev_node_features_path=args.dev_node_features,
+    #                                   test_node_features_path=args.test_node_features, node_feature_type=args.node_feature_type)
+    
+    # EDITED 
+    # dataset = LMRelationNetDataLoaderForPred(path_embedding_path, 
+    #                                   old_args.test_statements, old_args.test_rel_paths,
+    #                                   batch_size=args.batch_size, eval_batch_size=args.eval_batch_size, device=device,
+    #                                   model_name=old_args.encoder,
+    #                                   max_tuple_num=old_args.max_tuple_num, max_seq_length=old_args.max_seq_len,
+    #                                   is_inhouse=args.inhouse, inhouse_train_qids_path=args.inhouse_train_qids,
+    #                                   use_contextualized=use_contextualized,
+    #                                   test_adj_path=args.test_adj, test_node_features_path=args.test_node_features, node_feature_type=args.node_feature_type)
+    
+    # EDITED
+    dataset = LMRelationNetDataLoader(path_embedding_path, args.train_statements, args.train_rel_paths,
+                                      args.dev_statements, args.dev_rel_paths,
+                                      args.test_statements, args.test_rel_paths,
                                       batch_size=args.batch_size, eval_batch_size=args.eval_batch_size, device=device,
-                                      model_name=old_args.encoder,
-                                      max_tuple_num=old_args.max_tuple_num, max_seq_length=old_args.max_seq_len,
+                                      model_name=args.encoder,
+                                      max_tuple_num=args.max_tuple_num, max_seq_length=args.max_seq_len,
                                       is_inhouse=args.inhouse, inhouse_train_qids_path=args.inhouse_train_qids,
                                       use_contextualized=use_contextualized,
                                       train_adj_path=args.train_adj, dev_adj_path=args.dev_adj, test_adj_path=args.test_adj,
                                       train_node_features_path=args.train_node_features, dev_node_features_path=args.dev_node_features,
                                       test_node_features_path=args.test_node_features, node_feature_type=args.node_feature_type)
+
     print("***** generating model predictions *****")
     print(f'| dataset: {old_args.dataset} | save_dir: {args.save_dir} |')
+
+    n_samples, n_correct = 0, 0
+
+    print("(dataset.test_size)", (dataset.test_size()))
 
     for output_path, data_loader in ([(test_pred_path, dataset.test())] if dataset.test_size() > 0 else []):
         with torch.no_grad(), open(output_path, 'w') as fout:
@@ -361,8 +406,14 @@ def pred(args):
                 for qid, pred_label in zip(qids, logits.argmax(1)):
                     # fout.write('{},{}\n'.format(qid, chr(ord('A') + pred_label.item())))
                     fout.write('{}\n'.format(pred_label))
+                n_correct += (logits.argmax(1) == labels).sum().item()
+                n_samples += labels.size(0)
         print(f'predictions saved to {output_path}')
+    test_acc = n_correct / n_samples    
+    print(f'test accuracy {test_acc}')
+    wandb.log({'test_acc':test_acc}) # EDITED
     print('***** prediction done *****')
+
 
 if __name__ == '__main__':
     main()

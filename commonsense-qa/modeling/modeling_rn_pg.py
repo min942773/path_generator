@@ -170,6 +170,8 @@ class LMRelationNet(nn.Module):
         else:
             *lm_inputs, path_embedding, qa_ids, rel_ids, num_tuples = inputs
             emb_data = None
+        # print("inputs")
+        # print(inputs)
         sent_vecs, all_hidden_states = self.encoder(*lm_inputs, layer_id=layer_id)
         agg_path_embedding = self.path_encoder(s=sent_vecs, p=path_embedding)
         logits, attn = self.decoder(path_embedding=agg_path_embedding, sent_vecs=sent_vecs, qa_ids=qa_ids, rel_ids=rel_ids, num_tuples=num_tuples, emb_data=emb_data)  # cxy-style param passing
@@ -229,8 +231,13 @@ class LMRelationNetDataLoader(object):
         if self.is_inhouse:
             with open(inhouse_train_qids_path, 'r') as fin:
                 inhouse_qids = set(line.strip() for line in fin)
+            # EDITED TO GET SMALL TEST SET
+            inhouse_test_qids_path = inhouse_train_qids_path[:inhouse_train_qids_path.find('_qids')] + '_test' + inhouse_train_qids_path[inhouse_train_qids_path.find('_qids'):]
+            print(inhouse_test_qids_path)
+            with open(inhouse_test_qids_path, 'r') as fin_test:
+                inhouse_qids_test = set(line.strip() for line in fin_test)
             self.inhouse_train_indexes = torch.tensor([i for i, qid in enumerate(self.train_qids) if qid in inhouse_qids])
-            self.inhouse_test_indexes = torch.tensor([i for i, qid in enumerate(self.train_qids) if qid not in inhouse_qids])
+            self.inhouse_test_indexes = torch.tensor([i for i, qid in enumerate(self.train_qids) if qid in inhouse_qids_test])
 
     def __getitem__(self, index):
         raise NotImplementedError()
@@ -271,12 +278,14 @@ class LMRelationNetDataLoader(object):
             return BatchGenerator(self.device, self.eval_batch_size, torch.arange(len(self.test_qids)), self.test_qids, self.test_labels, tensors=self.test_data)
 
 class LMRelationNetDataLoaderForPred(object):
-
     def __init__(self, path_embedding_path,
+                 train_statement_path, train_rpath_jsonl,
+                 dev_statement_path, dev_rpath_jsonl,
                  test_statement_path, test_rpath_jsonl,
                  batch_size, eval_batch_size, device, model_name,
                  max_tuple_num=200, max_seq_length=128,
                  is_inhouse=True, inhouse_train_qids_path=None, use_contextualized=False,
+                 train_adj_path=None, train_node_features_path=None, dev_adj_path=None, dev_node_features_path=None,
                  test_adj_path=None, test_node_features_path=None, node_feature_type=None):
         super().__init__()
         self.batch_size = batch_size
@@ -287,13 +296,19 @@ class LMRelationNetDataLoaderForPred(object):
 
         model_type = MODEL_NAME_TO_CLASS[model_name]
 
+        self.train_qids, self.train_labels, *self.train_data = load_input_tensors(train_statement_path, model_type, model_name, max_seq_length) # COPIED FROM TRAIN LOADER
+        self.dev_qids, self.dev_labels, *self.dev_data = load_input_tensors(dev_statement_path, model_type, model_name, max_seq_length)
+        self.test_qids, self.test_labels, *self.test_data = load_input_tensors(test_statement_path, model_type, model_name, max_seq_length) # COPIED FROM TRAIN LOADER
+
         num_choice = self.train_data[0].size(1)
+        # num_choice = self.test_data[0].size(1)
 
         with open(path_embedding_path, 'rb') as handle:
             path_embedding = pickle.load(handle)
 
         assert all(len(self.train_qids) == x.size(0) for x in [self.train_labels] + self.train_data)
         assert all(len(self.dev_qids) == x.size(0) for x in [self.dev_labels] + self.dev_data)
+        
         if test_statement_path is not None:
             self.test_qids, self.test_labels, *self.test_data = load_input_tensors(test_statement_path, model_type, model_name, max_seq_length)
             self.test_data += [path_embedding['test']]
@@ -307,11 +322,13 @@ class LMRelationNetDataLoaderForPred(object):
                                                                                                           self.dev_data[num_tuple_idx].float().mean(),
                                                                                                           self.test_data[num_tuple_idx].float().mean() if test_statement_path else 0))
 
+        # print('| test_num_tuples = {:.2f} |'.format(self.test_data[num_tuple_idx].float().mean() if test_statement_path else 0))
+
         if self.is_inhouse:
             with open(inhouse_train_qids_path, 'r') as fin:
                 inhouse_qids = set(line.strip() for line in fin)
             self.inhouse_train_indexes = torch.tensor([i for i, qid in enumerate(self.train_qids) if qid in inhouse_qids])
-            self.inhouse_test_indexes = torch.tensor([i for i, qid in enumerate(self.train_qids) if qid not in inhouse_qids])
+            self.inhouse_test_indexes = torch.tensor([i for i, qid in enumerate(self.test_qids) if qid not in inhouse_qids])
 
     def __getitem__(self, index):
         raise NotImplementedError()

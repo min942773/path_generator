@@ -35,6 +35,11 @@ input_paths = {
         'ent': './data/transe/glove.transe.sgd.ent.npy',
         'rel': './data/transe/glove.transe.sgd.rel.npy',
     },
+    'small_csqa': { # EDITED
+        'train': './data/small_csqa/train.jsonl',
+        'dev': './data/small_csqa/dev.jsonl',
+        'test': './data/small_csqa/test_rand_split_no_answers.jsonl',
+    },
 }
 
 output_paths = {
@@ -158,12 +163,65 @@ output_paths = {
             'test': './data/obqa/triples/test.triples.pk',
         },
     },
+    'small_csqa': {
+        'statement': {
+            'train': './data/small_csqa/statement/train.statement.jsonl',
+            'dev': './data/small_csqa/statement/dev.statement.jsonl',
+            'test': './data/small_csqa/statement/test.statement.jsonl',
+            'vocab': './data/small_csqa/statement/vocab.json',
+        },
+        'statement-with-ans-pos': {
+            'train': './data/small_csqa/statement/train.statement-with-ans-pos.jsonl',
+            'dev': './data/small_csqa/statement/dev.statement-with-ans-pos.jsonl',
+            'test': './data/small_csqa/statement/test.statement-with-ans-pos.jsonl',
+        },
+        'tokenized': {
+            'train': './data/small_csqa/tokenized/train.tokenized.txt',
+            'dev': './data/small_csqa/tokenized/dev.tokenized.txt',
+            'test': './data/small_csqa/tokenized/test.tokenized.txt',
+        },
+        'grounded': {
+            'train': './data/small_csqa/grounded/train.grounded.jsonl',
+            'dev': './data/small_csqa/grounded/dev.grounded.jsonl',
+            'test': './data/small_csqa/grounded/test.grounded.jsonl',
+        },
+        'paths': {
+            'raw-train': './data/small_csqa/paths/train.paths.raw.jsonl',
+            'raw-dev': './data/small_csqa/paths/dev.paths.raw.jsonl',
+            'raw-test': './data/small_csqa/paths/test.paths.raw.jsonl',
+            'scores-train': './data/small_csqa/paths/train.paths.scores.jsonl',
+            'scores-dev': './data/small_csqa/paths/dev.paths.scores.jsonl',
+            'scores-test': './data/small_csqa/paths/test.paths.scores.jsonl',
+            'pruned-train': './data/small_csqa/paths/train.paths.pruned.jsonl',
+            'pruned-dev': './data/small_csqa/paths/dev.paths.pruned.jsonl',
+            'pruned-test': './data/small_csqa/paths/test.paths.pruned.jsonl',
+            'adj-train': './data/small_csqa/paths/train.paths.adj.jsonl',
+            'adj-dev': './data/small_csqa/paths/dev.paths.adj.jsonl',
+            'adj-test': './data/small_csqa/paths/test.paths.adj.jsonl',
+        },
+        'graph': {
+            'train': './data/small_csqa/graph/train.graph.jsonl',
+            'dev': './data/small_csqa/graph/dev.graph.jsonl',
+            'test': './data/small_csqa/graph/test.graph.jsonl',
+            'adj-train': './data/small_csqa/graph/train.graph.adj.pk',
+            'adj-dev': './data/small_csqa/graph/dev.graph.adj.pk',
+            'adj-test': './data/small_csqa/graph/test.graph.adj.pk',
+            'nxg-from-adj-train': './data/small_csqa/graph/train.graph.adj.jsonl',
+            'nxg-from-adj-dev': './data/small_csqa/graph/dev.graph.adj.jsonl',
+            'nxg-from-adj-test': './data/small_csqa/graph/test.graph.adj.jsonl',
+        },
+        'triple': {
+            'train': './data/small_csqa/triples/train.triples.pk',
+            'dev': './data/small_csqa/triples/dev.triples.pk',
+            'test': './data/small_csqa/triples/test.triples.pk',
+        },
+    },
 }
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--run', default=['common', 'csqa'], choices=['common', 'csqa', 'obqa', 'make_word_vocab'], nargs='+')
+    parser.add_argument('--run', default=['common', 'csqa'], choices=['common', 'csqa', 'obqa', 'make_word_vocab', 'small_csqa'], nargs='+')
     parser.add_argument('--path_prune_threshold', type=float, default=0.12, help='threshold for pruning paths')
     parser.add_argument('--max_node_num', type=int, default=200, help='maximum number of nodes per graph')
     parser.add_argument('-p', '--nprocs', type=int, default=cpu_count(), help='number of processes to use')
@@ -253,6 +311,33 @@ def main():
         'make_word_vocab': [
             {'func': make_word_vocab, 'args': ((output_paths['csqa']['statement']['train'],), output_paths['csqa']['statement']['vocab'])},
             {'func': make_word_vocab, 'args': ((output_paths['obqa']['statement']['train'],), output_paths['obqa']['statement']['vocab'])},
+        ],
+
+        'small_csqa': [
+            # {'func': convert_to_entailment, 'args': (input_paths['small_csqa']['train'], output_paths['small_csqa']['statement']['train'])},
+            # {'func': convert_to_entailment, 'args': (input_paths['small_csqa']['dev'], output_paths['small_csqa']['statement']['dev'])},
+            {'func': convert_to_entailment, 'args': (input_paths['small_csqa']['test'], output_paths['small_csqa']['statement']['test'])},
+            # {'func': ground, 'args': (output_paths['small_csqa']['statement']['train'], output_paths['cpnet']['vocab'],
+            #                           output_paths['cpnet']['patterns'], output_paths['small_csqa']['grounded']['train'], args.nprocs)},
+            # {'func': ground, 'args': (output_paths['small_csqa']['statement']['dev'], output_paths['cpnet']['vocab'],
+            #                           output_paths['cpnet']['patterns'], output_paths['small_csqa']['grounded']['dev'], args.nprocs)},
+            {'func': ground, 'args': (output_paths['small_csqa']['statement']['test'], output_paths['cpnet']['vocab'],
+                                      output_paths['cpnet']['patterns'], output_paths['small_csqa']['grounded']['test'], args.nprocs)},
+            # {'func': generate_adj_data_from_grounded_concepts, 'args': (output_paths['small_csqa']['grounded']['train'], output_paths['cpnet']['pruned-graph'],
+            #                                                             output_paths['cpnet']['vocab'], output_paths['small_csqa']['graph']['adj-train'], args.nprocs)},
+            # {'func': generate_adj_data_from_grounded_concepts, 'args': (output_paths['small_csqa']['grounded']['dev'], output_paths['cpnet']['pruned-graph'],
+            #                                                             output_paths['cpnet']['vocab'], output_paths['small_csqa']['graph']['adj-dev'], args.nprocs)},
+            {'func': generate_adj_data_from_grounded_concepts, 'args': (output_paths['small_csqa']['grounded']['test'], output_paths['cpnet']['pruned-graph'],
+                                                                        output_paths['cpnet']['vocab'], output_paths['small_csqa']['graph']['adj-test'], args.nprocs)},
+            # {'func': generate_triples_from_adj, 'args': (output_paths['small_csqa']['graph']['adj-train'], output_paths['small_csqa']['grounded']['train'],
+            #                                              output_paths['cpnet']['vocab'], output_paths['small_csqa']['triple']['train'])},
+            # {'func': generate_triples_from_adj, 'args': (output_paths['small_csqa']['graph']['adj-dev'], output_paths['small_csqa']['grounded']['dev'],
+            #                                              output_paths['cpnet']['vocab'], output_paths['small_csqa']['triple']['dev'])},
+            {'func': generate_triples_from_adj, 'args': (output_paths['small_csqa']['graph']['adj-test'], output_paths['small_csqa']['grounded']['test'],
+                                                         output_paths['cpnet']['vocab'], output_paths['small_csqa']['triple']['test'])},
+            # {'func': generate_path_and_graph_from_adj, 'args': (output_paths['small_csqa']['graph']['adj-train'], output_paths['cpnet']['pruned-graph'], output_paths['small_csqa']['paths']['adj-train'], output_paths['small_csqa']['graph']['nxg-from-adj-train'], args.nprocs)},
+            # {'func': generate_path_and_graph_from_adj, 'args': (output_paths['small_csqa']['graph']['adj-dev'], output_paths['cpnet']['pruned-graph'], output_paths['small_csqa']['paths']['adj-dev'], output_paths['small_csqa']['graph']['nxg-from-adj-dev'], args.nprocs)},
+            {'func': generate_path_and_graph_from_adj, 'args': (output_paths['small_csqa']['graph']['adj-test'], output_paths['cpnet']['pruned-graph'], output_paths['small_csqa']['paths']['adj-test'], output_paths['small_csqa']['graph']['nxg-from-adj-test'], args.nprocs)},
         ],
     }
 

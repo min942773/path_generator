@@ -1,0 +1,5 @@
+commonsense-qa/data/
+commonsense-qa/saved_models/
+commonsense-qa/path_embeddings/
+commonsense-qa/wandb/
+cache/
