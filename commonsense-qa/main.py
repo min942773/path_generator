@@ -185,7 +185,6 @@ def train(args):
     ###################################################################################################
     #   Build model                                                                                   #
     ###################################################################################################
-
     lstm_config = get_lstm_config_from_args(args)
     model = LMRelationNet(model_name=args.encoder, from_checkpoint=args.from_checkpoint, concept_num=concept_num, concept_dim=relation_dim,
                           relation_num=relation_num, relation_dim=relation_dim,
@@ -357,28 +356,6 @@ def pred(args):
 
     path_embedding_path = os.path.join('./path_embeddings/', args.dataset, 'path_embedding.pickle')
 
-    # dataset = LMRelationNetDataLoaderForPred(path_embedding_path, old_args.train_statements, old_args.train_rel_paths,
-    #                                   old_args.dev_statements, old_args.dev_rel_paths,
-    #                                   old_args.test_statements, old_args.test_rel_paths,
-    #                                   batch_size=args.batch_size, eval_batch_size=args.eval_batch_size, device=device,
-    #                                   model_name=old_args.encoder,
-    #                                   max_tuple_num=old_args.max_tuple_num, max_seq_length=old_args.max_seq_len,
-    #                                   is_inhouse=args.inhouse, inhouse_train_qids_path=args.inhouse_train_qids,
-    #                                   use_contextualized=use_contextualized,
-    #                                   train_adj_path=args.train_adj, dev_adj_path=args.dev_adj, test_adj_path=args.test_adj,
-    #                                   train_node_features_path=args.train_node_features, dev_node_features_path=args.dev_node_features,
-    #                                   test_node_features_path=args.test_node_features, node_feature_type=args.node_feature_type)
-    
-    # EDITED 
-    # dataset = LMRelationNetDataLoaderForPred(path_embedding_path, 
-    #                                   old_args.test_statements, old_args.test_rel_paths,
-    #                                   batch_size=args.batch_size, eval_batch_size=args.eval_batch_size, device=device,
-    #                                   model_name=old_args.encoder,
-    #                                   max_tuple_num=old_args.max_tuple_num, max_seq_length=old_args.max_seq_len,
-    #                                   is_inhouse=args.inhouse, inhouse_train_qids_path=args.inhouse_train_qids,
-    #                                   use_contextualized=use_contextualized,
-    #                                   test_adj_path=args.test_adj, test_node_features_path=args.test_node_features, node_feature_type=args.node_feature_type)
-    
     # EDITED
     dataset = LMRelationNetDataLoader(path_embedding_path, args.train_statements, args.train_rel_paths,
                                       args.dev_statements, args.dev_rel_paths,
@@ -398,14 +375,19 @@ def pred(args):
     n_samples, n_correct = 0, 0
 
     print("(dataset.test_size)", (dataset.test_size()))
+    # print("args.batch_size", args.batch_size)
+    # print("args.eval_batch_size", args.eval_batch_size)
 
     for output_path, data_loader in ([(test_pred_path, dataset.test())] if dataset.test_size() > 0 else []):
         with torch.no_grad(), open(output_path, 'w') as fout:
             for qids, labels, *input_data in tqdm(data_loader):
                 logits, _ = model(*input_data)
-                for qid, pred_label in zip(qids, logits.argmax(1)):
-                    # fout.write('{},{}\n'.format(qid, chr(ord('A') + pred_label.item())))
-                    fout.write('{}\n'.format(pred_label))
+                *lm_inputs, path_embedding, qa_ids, rel_ids, num_tuples = input_data # 여기부터 수정 (4/13)
+                print("path_embedding.shape", path_embedding.shape)
+                for i, (qid, pred_label) in enumerate(zip(qids, logits.argmax(1))):
+                    if labels[i] != pred_label:
+                        fout.write('{},{}\n'.format(qid, chr(ord('A') + pred_label.item())))
+                    # fout.write('{}\n'.format(pred_label))
                 n_correct += (logits.argmax(1) == labels).sum().item()
                 n_samples += labels.size(0)
         print(f'predictions saved to {output_path}')

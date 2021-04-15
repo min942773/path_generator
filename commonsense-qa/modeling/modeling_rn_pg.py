@@ -131,8 +131,12 @@ class RelationNet(nn.Module):
         qars_vecs = self.mlp(concat)
         qars_vecs = self.activation(qars_vecs)
 
+#        print("sent_vecs.shape", sent_vecs.shape)
+#        print("qars_vecs.shape", qars_vecs.shape)
+
         if self.ablation in ('multihead_pool', 'att_pool'):
             pooled_vecs, att_scores = self.attention(sent_vecs, qars_vecs, mask)
+            print("att_scores.shape", att_scores.shape)
         else:
             qars_vecs = qars_vecs.masked_fill(mask.unsqueeze(2).expand_as(qars_vecs), 0)
             pooled_vecs = qars_vecs.sum(1) / (~mask).float().sum(1).unsqueeze(1).float().to(qars_vecs.device)
@@ -172,6 +176,11 @@ class LMRelationNet(nn.Module):
             emb_data = None
         # print("inputs")
         # print(inputs)
+        # print("lm_inputs.shape", len(lm_inputs))
+        # print("path_embedding.shape", path_embedding.shape)
+        # print("qa_ids.shape", qa_ids.shape)
+        # print("rel_ids.shape", rel_ids.shape)
+        
         sent_vecs, all_hidden_states = self.encoder(*lm_inputs, layer_id=layer_id)
         agg_path_embedding = self.path_encoder(s=sent_vecs, p=path_embedding)
         logits, attn = self.decoder(path_embedding=agg_path_embedding, sent_vecs=sent_vecs, qa_ids=qa_ids, rel_ids=rel_ids, num_tuples=num_tuples, emb_data=emb_data)  # cxy-style param passing

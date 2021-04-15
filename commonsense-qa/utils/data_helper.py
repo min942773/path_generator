@@ -20,6 +20,10 @@ class DataHelper(object):
         super(DataHelper, self).__init__()
         if 'csqa' in args.data_dir:
             from .preprocess_csqa import PreprocessData_Ground
+        elif 'small_csqa' in args.data_dir:
+            from .preprocess_csqa import PreprocessData_Ground
+        elif 'expanded_csqa' in args.data_dir:
+            from .preprocess_csqa import PreprocessData_Ground
         elif 'obqa' in args.data_dir:
             from .preprocess_obqa import PreprocessData_Ground
 

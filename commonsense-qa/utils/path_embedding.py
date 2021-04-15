@@ -38,7 +38,7 @@ def _get_path_embedding_greedy(dataset, generator, args, tokenizer=None, output_
 
     path_array = []
 
-    for step, context in enumerate(epoch_iterator):
+    for step, context in tqdm(enumerate(epoch_iterator)):
 
         # questions, contexts, answers, choices = batch
         context = context[0].to(args.device)
@@ -61,7 +61,7 @@ def _get_path_embedding_greedy(dataset, generator, args, tokenizer=None, output_
 
                 path = tokenizer.decode(path.tolist(), skip_special_tokens=True)
                 path = ' '.join(path.replace('<PAD>', '').split())
-                print(count1, count2, count3, path)
+                # print(count1, count2, count3, path)
                 with open(output_file, 'a') as fout:
                     fout.write(path+'\n')
                 
@@ -69,19 +69,19 @@ def _get_path_embedding_greedy(dataset, generator, args, tokenizer=None, output_
                 path_array.append(path)
 
         path_embeddings.extend(context_embedding.tolist())
-
-    path_array = torch.tensor(path_array)
-    path_array = path_array.view(dataset.size(), num_choice, num_context, -1)
-    path_array_file = os.path.join('./path_embeddings/', args.data_dir, 'path_array.pickle')
-    with open(path_array_file, 'wb') as handle:
-        pickle.dump(path_array, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    
+    # path_array = torch.tensor(path_array)
+    # path_array = path_array.view(dataset.size(), num_choice, num_context, -1)
+    # path_array_file = os.path.join('./path_embeddings/', args.data_dir, 'path_array.pickle')
+    # with open(path_array_file, 'wb') as handle:
+    #     pickle.dump(path_array, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     path_embeddings = torch.tensor(path_embeddings, dtype=torch.float)
     return path_embeddings
 
 def save_path_embedding(datahelper, generator, save_file, args):
     path_embeddings_dict = {}
-    path_embeddings_dict['train'] = _get_path_embedding_greedy(datahelper.trainset, generator, args, output_file='./generated_path_train.log')
+    path_embeddings_dict['train'] = _get_path_embedding_greedy(datahelper.trainset, generator, args, output_file='./generated_path_original.log')
     path_embeddings_dict['dev'] = _get_path_embedding_greedy(datahelper.devset, generator, args)
     path_embeddings_dict['test'] = _get_path_embedding_greedy(datahelper.testset, generator, args)
 

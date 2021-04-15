@@ -1,1 +1,1 @@
-python preprocess.py --run small_csqa
+python preprocess.py --run expanded_csqa

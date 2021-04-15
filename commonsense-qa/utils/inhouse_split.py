@@ -17,12 +17,13 @@ default_num = {
     'csqa': 1241,
     'socialiqa': 1500,
     'small_csqa': 1241,
+    'expanded_csqa': 1241,
 }
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', default='obqa', choices=['csqa', 'socialiqa', 'obqa', 'small_csqa'])
+    parser.add_argument('--dataset', default='obqa', choices=['csqa', 'socialiqa', 'obqa', 'small_csqa', 'expanded_csqa'])
     parser.add_argument('--seed', default=100, type=int)
     parser.add_argument('--num_of_test', default=400, type=int)
     parser.add_argument('--qids_path', default='./data/obqa/inhouse_split_qids.txt')

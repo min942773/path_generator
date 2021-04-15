@@ -20,4 +20,5 @@ nohup python -u main.py \
 	--save_model $save_model \
 	--seed $seed \
 	--mode $mode \
-	> ${save_dir}/train.log 2>&1 &
+	--ablation $ablation \
+	> ${save_dir}/${logfile} 2>&1 &

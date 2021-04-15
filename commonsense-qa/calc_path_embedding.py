@@ -49,7 +49,7 @@ def run_generating(args):
     config = GPT2Config.from_pretrained(args.generator_type, cache_dir='../cache/')
     datahelper = DataHelper(args)
 
-    path_embedding_file = os.path.join('./path_embeddings/', args.data_dir, 'path_embedding.pickle')
+    path_embedding_file = os.path.join('./path_embeddings/', args.data_dir, 'path_embedding2.pickle')
 
     # self define lm head gpt2
     gpt = GPT2Model.from_pretrained(args.generator_type, cache_dir='../cache/')
