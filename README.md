@@ -6,6 +6,8 @@
 - 아래의 코드를 그대로 실행해주세요 (small_csqa.config에 ablation으로 PG를 생성안하도록 바꾸어놓음)
 - 제 [노션](https://www.notion.so/Path-Generator-90508348ed7a4123874ad41925c3206b)에 오류났던 부분 올려놓았는데 혹시 오류나면 참고해주세요.
 - 그 외 궁금한 부분은 이슈로 질문주세요!
+- GPT를 활용하여 context를 expansion한 [expanded_csqa](https://drive.google.com/file/d/1AfEkHZDqjIWxvGkm3t6nnIPsImB73Wf4/view?usp=sharing)라는 데이터셋을 만들어두었습니다.
+- 헤당 데이터는 다운받아서 '../commonsense-qa/data'에 추가해주세요
 
 ### 1. Download Data
 
